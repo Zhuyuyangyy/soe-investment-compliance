@@ -1,0 +1,99 @@
+{
+  "rules": [
+    {
+      "rule_id": "RULE_SOE_001",
+      "rule_type": "investment_decision",
+      "description": "投资决策依据不足，未提供可研报告或批复文件",
+      "severity": "high",
+      "penalty": "责令补充资料，暂停支付",
+      "enabled": true,
+      "keywords": ["投资", "可研", "立项", "批复"]
+    },
+    {
+      "rule_id": "RULE_SOE_002",
+      "rule_type": "triple_one_large",
+      "description": "三重一大决策程序缺失或不合规",
+      "severity": "critical",
+      "penalty": "责令整改，追究责任",
+      "enabled": true,
+      "keywords": ["三重一大", "党委会", "董事会", "决策"]
+    },
+    {
+      "rule_id": "RULE_SOE_003",
+      "rule_type": "contract_amount",
+      "description": "合同金额与预算或可研偏差超过20%",
+      "severity": "medium",
+      "penalty": "要求说明原因",
+      "enabled": true,
+      "keywords": ["合同金额", "偏差", "预算"]
+    },
+    {
+      "rule_id": "RULE_SOE_004",
+      "rule_type": "procurement",
+      "description": "采购流程不合规，未按规定招标",
+      "severity": "high",
+      "penalty": "重新履行采购程序",
+      "enabled": true,
+      "keywords": ["采购", "招标", "投标"]
+    },
+    {
+      "rule_id": "RULE_SOE_005",
+      "rule_type": "triple_match",
+      "description": "合同-付款-验收三单金额不一致",
+      "severity": "high",
+      "penalty": "暂停支付，彻查",
+      "enabled": true,
+      "keywords": ["三单", "金额", "不一致", "匹配"]
+    },
+    {
+      "rule_id": "RULE_SOE_006",
+      "rule_type": "related_party",
+      "description": "存在关联交易但未披露或披露不实",
+      "severity": "critical",
+      "penalty": "移送纪检监察",
+      "enabled": true,
+      "keywords": ["关联", "交易", "集团", "子公司"]
+    },
+    {
+      "rule_id": "RULE_SOE_007",
+      "rule_type": "responsibility_trace",
+      "description": "责任主体不明确，追溯困难",
+      "severity": "medium",
+      "penalty": "明确责任人",
+      "enabled": true,
+      "keywords": ["责任", "追溯", "免责"]
+    },
+    {
+      "rule_id": "RULE_SOE_008",
+      "rule_type": "document_integrity",
+      "description": "项目文档缺失严重，关键材料不完整",
+      "severity": "high",
+      "penalty": "补充缺失文档",
+      "enabled": true,
+      "keywords": ["文档", "缺失", "不完整"]
+    },
+    {
+      "rule_id": "RULE_SOE_009",
+      "rule_type": "timeline_compliance",
+      "description": "项目时间线违反常规流程",
+      "severity": "medium",
+      "penalty": "核实说明",
+      "enabled": true,
+      "keywords": ["时间", "流程", "顺序"]
+    },
+    {
+      "rule_id": "RULE_SOE_010",
+      "rule_type": "fund_usage",
+      "description": "资金使用与合同约定不符",
+      "severity": "high",
+      "penalty": "停止支付，整改",
+      "enabled": true,
+      "keywords": ["资金", "挪用", "用途"]
+    }
+  ],
+  "rule_metadata": {
+    "version": "1.0",
+    "last_updated": "2024-01-01",
+    "total_rules": 10
+  }
+}

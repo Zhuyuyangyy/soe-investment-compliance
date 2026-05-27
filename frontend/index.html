@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国企经营投资合规审查与责任链风险追踪系统 V1.0</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0f1923; color: #e0e6ed; min-height: 100vh; }
+        #app { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: linear-gradient(180deg, #1a2634 0%, #0f1923 100%); border-right: 1px solid #2a3a4d; padding: 20px 0; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid #2a3a4d; margin-bottom: 20px; }
+        .sidebar-header h1 { font-size: 16px; color: #4fd1c5; font-weight: 600; line-height: 1.4; }
+        .sidebar-header .version { font-size: 11px; color: #718096; margin-top: 4px; }
+        .nav-item { padding: 12px 20px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover { background: rgba(79, 209, 197, 0.1); }
+        .nav-item.active { background: rgba(79, 209, 197, 0.15); border-left-color: #4fd1c5; color: #4fd1c5; }
+        .nav-item .icon { width: 20px; text-align: center; }
+        .main-content { flex: 1; padding: 24px; overflow-y: auto; }
+        .panel { background: #1a2634; border-radius: 12px; padding: 24px; margin-bottom: 20px; border: 1px solid #2a3a4d; }
+        .panel-title { font-size: 16px; font-weight: 600; color: #e0e6ed; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .panel-title .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(79, 209, 197, 0.2); color: #4fd1c5; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; color: #a0aec0; margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 10px 12px; background: #0f1923; border: 1px solid #2a3a4d; border-radius: 6px; color: #e0e6ed; font-size: 14px; transition: border-color 0.2s; }
+        .form-input:focus { outline: none; border-color: #4fd1c5; }
+        .form-input::placeholder { color: #718096; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #4fd1c5 0%, #38b2ac 100%); color: #0f1923; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 209, 197, 0.3); }
+        .btn-secondary { background: #2a3a4d; color: #e0e6ed; }
+        .btn-secondary:hover { background: #3a4a5d; }
+        .btn-danger { background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%); color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .grid { display: grid; gap: 16px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .card { background: #0f1923; border-radius: 8px; padding: 20px; border: 1px solid #2a3a4d; }
+        .card-value { font-size: 28px; font-weight: 700; color: #4fd1c5; }
+        .card-label { font-size: 13px; color: #718096; margin-top: 4px; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th { text-align: left; padding: 12px; background: #0f1923; color: #a0aec0; font-weight: 500; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #2a3a4d; }
+        .table td { padding: 12px; border-bottom: 1px solid #2a3a4d; font-size: 14px; }
+        .table tr:hover { background: rgba(79, 209, 197, 0.05); }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-critical { background: rgba(252, 129, 129, 0.2); color: #fc8181; }
+        .badge-high { background: rgba(255, 183, 77, 0.2); color: #ffb74d; }
+        .badge-medium { background: rgba(255, 217, 61, 0.2); color: #ffd93d; }
+        .badge-low { background: rgba(72, 209, 197, 0.2); color: #4fd1c5; }
+        .risk-radar { width: 100%; height: 400px; }
+        .chain-graph { width: 100%; height: 500px; background: #0f1923; border-radius: 8px; }
+        .triple-match-chart { width: 100%; height: 300px; }
+        .alert { padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start; }
+        .alert-critical { background: rgba(252, 129, 129, 0.1); border: 1px solid rgba(252, 129, 129, 0.3); }
+        .alert-high { background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); }
+        .alert-info { background: rgba(79, 209, 197, 0.1); border: 1px solid rgba(79, 209, 197, 0.3); }
+        .alert-icon { font-size: 20px; }
+        .progress-bar { height: 8px; background: #2a3a4d; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; background: #0f1923; padding: 4px; border-radius: 8px; }
+        .tab-item { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s; color: #718096; }
+        .tab-item.active { background: #4fd1c5; color: #0f1923; }
+        .empty-state { text-align: center; padding: 40px; color: #718096; }
+        .section-title { font-size: 14px; color: #a0aec0; margin: 20px 0 12px; padding-left: 12px; border-left: 3px solid #4fd1c5; }
+        .node-card { display: inline-block; padding: 8px 16px; background: #2a3a4d; border-radius: 6px; margin: 4px; font-size: 13px; }
+        .node-person { border: 1px solid #4fd1c5; }
+        .node-org { border: 1px solid #ffb74d; }
+        .node-supplier { border: 1px solid #fc8181; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loading { animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>国企经营投资<br>合规审查系统</h1>
+            <div class="version">V1.0 | 端口 8017</div>
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'dashboard'}" @click="currentView = 'dashboard'">
+            <span class="icon">📊</span> 综合看板
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'projects'}" @click="currentView = 'projects'">
+            <span class="icon">📁</span> 项目管理
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'triple-match'}" @click="currentView = 'triple-match'">
+            <span class="icon">📋</span> 三单匹配
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'chain'}" @click="currentView = 'chain'">
+            <span class="icon">🔗</span> 责任链图谱
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'risk'}" @click="currentView = 'risk'">
+            <span class="icon">📈</span> 风险雷达
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'report'}" @click="currentView = 'report'">
+            <span class="icon">📑</span> 合规报告
+        </div>
+        <div class="nav-item" :class="{active: currentView === 'audit'}" @click="currentView = 'audit'">
+            <span class="icon">📝</span> 审计日志
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- Dashboard View -->
+        <div v-if="currentView === 'dashboard'">
+            <div class="panel">
+                <div class="panel-title">📊 综合看板 <span class="tag">实时</span></div>
+                <div class="grid grid-4">
+                    <div class="card">
+                        <div class="card-value">{{ stats.totalProjects }}</div>
+                        <div class="card-label">项目总数</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">{{ stats.totalRiskScore }}</div>
+                        <div class="card-label">综合风险评分</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">{{ stats.totalIssues }}</div>
+                        <div class="card-label">发现问题数</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">{{ stats.pendingProjects }}</div>
+                        <div class="card-label">待整改项目</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="panel">
+                    <div class="panel-title">⚠️ 风险预警</div>
+                    <div v-if="riskAlerts.length === 0" class="empty-state">暂无风险预警</div>
+                    <div v-for="alert in riskAlerts" :key="alert.code" :class="'alert alert-' + alert.level">
+                        <span class="alert-icon">{{ alert.level === 'critical' ? '🔴' : '🟡' }}</span>
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">{{ alert.code }}</div>
+                            <div style="font-size: 13px; color: #a0aec0;">{{ alert.message }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title">📋 整改任务</div>
+                    <div v-if="rectificationTasks.length === 0" class="empty-state">暂无整改任务</div>
+                    <div v-for="task in rectificationTasks" :key="task.id" style="padding: 12px; background: #0f1923; border-radius: 6px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 14px;">{{ task.action }}</span>
+                            <span :class="'badge badge-' + task.severity">{{ task.severity }}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #718096; margin-top: 6px;">{{ task.responsible }} | {{ task.deadline }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📈 风险雷达图</div>
+                <div id="radarChart" class="risk-radar"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">📁 项目列表</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>项目名称</th>
+                            <th>部门</th>
+                            <th>投资金额</th>
+                            <th>风险等级</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="p in projects" :key="p.id">
+                            <td>{{ p.id }}</td>
+                            <td>{{ p.project_name }}</td>
+                            <td>{{ p.department || '-' }}</td>
+                            <td>{{ p.investment_amount ? p.investment_amount.toLocaleString() : '-' }}</td>
+                            <td><span :class="'badge badge-' + (p.risk_level || 'low')">{{ p.risk_level || 'low' }}</span></td>
+                            <td>{{ p.status }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-secondary" @click="selectProject(p.id)">查看</button>
+                                <button class="btn btn-sm btn-primary" @click="analyzeProject(p.id)">分析</button>
+                            </td>
+                        </tr>
+                        <tr v-if="projects.length === 0">
+                            <td colspan="7" style="text-align: center; color: #718096;">暂无项目数据</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Projects View -->
+        <div v-if="currentView === 'projects'">
+            <div class="panel">
+                <div class="panel-title">📁 项目注册与管理</div>
+                <div class="tab-bar">
+                    <div class="tab-item" :class="{active: projectTab === 'create'}" @click="projectTab = 'create'">注册项目</div>
+                    <div class="tab-item" :class="{active: projectTab === 'documents'}" @click="projectTab = 'documents'">上传资料</div>
+                    <div class="tab-item" :class="{active: projectTab === 'contracts'}" @click="projectTab = 'contracts'">合同管理</div>
+                    <div class="tab-item" :class="{active: projectTab === 'payments'}" @click="projectTab = 'payments'">付款登记</div>
+                    <div class="tab-item" :class="{active: projectTab === 'acceptance'}" @click="projectTab = 'acceptance'">验收登记</div>
+                </div>
+
+                <div v-if="projectTab === 'create'">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">项目名称 *</label>
+                            <input v-model="newProject.project_name" class="form-input" placeholder="输入项目名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">责任部门</label>
+                            <input v-model="newProject.department" class="form-input" placeholder="输入部门名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">投资金额（元）</label>
+                            <input v-model.number="newProject.investment_amount" type="number" class="form-input" placeholder="输入金额">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" @click="registerProject">注册项目</button>
+                </div>
+
+                <div v-if="projectTab === 'documents'">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label class="form-label">选择项目</label>
+                            <select v-model="docForm.project_id" class="form-input">
+                                <option value="">请选择项目</option>
+                                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">文档类型</label>
+                            <select v-model="docForm.doc_type" class="form-input">
+                                <option value="project_proposal">立项文件</option>
+                                <option value="feasibility_study">可行性研究报告</option>
+                                <option value="meeting_minutes">会议纪要</option>
+                                <option value="contract">合同文件</option>
+                                <option value="payment">付款凭证</option>
+                                <option value="acceptance">验收报告</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">文档内容</label>
+                        <textarea v-model="docForm.content" class="form-input" rows="6" placeholder="输入文档内容或粘贴文本"></textarea>
+                    </div>
+                    <button class="btn btn-primary" @click="uploadDocument">上传资料</button>
+                </div>
+
+                <div v-if="projectTab === 'contracts'">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">选择项目</label>
+                            <select v-model="contractForm.project_id" class="form-input">
+                                <option value="">请选择项目</option>
+                                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">合同编号</label>
+                            <input v-model="contractForm.contract_no" class="form-input" placeholder="合同编号">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">合同金额（元）*</label>
+                            <input v-model.number="contractForm.amount" type="number" class="form-input" placeholder="金额">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">签订日期</label>
+                            <input v-model="contractForm.signing_date" type="date" class="form-input">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label">合同方（甲方,乙方）</label>
+                            <input v-model="contractForm.parties" class="form-input" placeholder="如：XX集团,XX公司">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" @click="registerContract">登记合同</button>
+                </div>
+
+                <div v-if="projectTab === 'payments'">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">选择项目</label>
+                            <select v-model="paymentForm.project_id" class="form-input">
+                                <option value="">请选择项目</option>
+                                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">付款编号</label>
+                            <input v-model="paymentForm.payment_no" class="form-input" placeholder="付款编号">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">付款金额（元）*</label>
+                            <input v-model.number="paymentForm.amount" type="number" class="form-input" placeholder="金额">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">付款日期</label>
+                            <input v-model="paymentForm.payment_date" type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">发票号码</label>
+                            <input v-model="paymentForm.invoice_no" class="form-input" placeholder="发票号">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" @click="registerPayment">登记付款</button>
+                </div>
+
+                <div v-if="projectTab === 'acceptance'">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">选择项目</label>
+                            <select v-model="acceptanceForm.project_id" class="form-input">
+                                <option value="">请选择项目</option>
+                                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">验收编号</label>
+                            <input v-model="acceptanceForm.acceptance_no" class="form-input" placeholder="验收编号">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">验收金额（元）*</label>
+                            <input v-model.number="acceptanceForm.amount" type="number" class="form-input" placeholder="金额">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">验收日期</label>
+                            <input v-model="acceptanceForm.acceptance_date" type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">验收结果</label>
+                            <select v-model="acceptanceForm.result" class="form-input">
+                                <option value="合格">合格</option>
+                                <option value="通过">通过</option>
+                                <option value="不合格">不合格</option>
+                                <option value="需整改">需整改</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" @click="registerAcceptance">登记验收</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Triple Match View -->
+        <div v-if="currentView === 'triple-match'">
+            <div class="panel">
+                <div class="panel-title">📋 三单匹配检测</div>
+                <div class="grid grid-3" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">选择项目</label>
+                        <select v-model="tripleMatchProjectId" class="form-input">
+                            <option value="">请选择项目</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" @click="checkTripleMatch" :disabled="!tripleMatchProjectId">执行检测</button>
+
+                <div v-if="tripleMatchResult" style="margin-top: 24px;">
+                    <div :class="'alert alert-' + (tripleMatchResult.is_matched ? 'info' : 'high')">
+                        <span class="alert-icon">{{ tripleMatchResult.is_matched ? '✅' : '⚠️' }}</span>
+                        <div>
+                            <div style="font-weight: 600;">匹配状态: {{ tripleMatchResult.overall_status }}</div>
+                            <div style="font-size: 13px; color: #a0aec0;">
+                                合同 {{ tripleMatchResult.contract_count }} 份 | 付款 {{ tripleMatchResult.payment_count }} 笔 | 验收 {{ tripleMatchResult.acceptance_count }} 次
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">金额对比</div>
+                    <div id="tripleMatchChart" class="triple-match-chart"></div>
+
+                    <div class="section-title">不匹配项</div>
+                    <div v-if="tripleMatchResult.mismatches.length === 0" class="empty-state">全部匹配</div>
+                    <div v-for="(m, idx) in tripleMatchResult.mismatches" :key="idx" class="alert alert-high">
+                        <span class="alert-icon">❌</span>
+                        <div>
+                            <div style="font-weight: 600;">{{ m.type }}</div>
+                            <div style="font-size: 13px; color: #a0aec0;">
+                                偏差: {{ m.deviation_pct?.toFixed(2) }}% | 差额: {{ m.deviation_amount?.toLocaleString() }} 元
+                            </div>
+                            <div style="font-size: 12px; color: #fc8181; margin-top: 4px;">{{ m.code }}</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">警告信息</div>
+                    <div v-for="(w, idx) in tripleMatchResult.warnings" :key="idx" class="alert alert-info">
+                        <span class="alert-icon">⚠️</span>
+                        <div>{{ w.message }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responsibility Chain View -->
+        <div v-if="currentView === 'chain'">
+            <div class="panel">
+                <div class="panel-title">🔗 责任链图谱</div>
+                <div class="grid grid-3" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">选择项目</label>
+                        <select v-model="chainProjectId" class="form-input">
+                            <option value="">请选择项目</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" @click="buildChain" :disabled="!chainProjectId">构建图谱</button>
+
+                <div v-if="chainResult" style="margin-top: 24px;">
+                    <div class="grid grid-4" style="margin-bottom: 20px;">
+                        <div class="card">
+                            <div class="card-value">{{ chainResult.metadata?.total_nodes || 0 }}</div>
+                            <div class="card-label">节点总数</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ chainResult.metadata?.total_edges || 0 }}</div>
+                            <div class="card-label">关系边数</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ (chainResult.metadata?.decision_makers || []).length }}</div>
+                            <div class="card-label">决策人</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ (chainResult.metadata?.suppliers || []).length }}</div>
+                            <div class="card-label">供应商</div>
+                        </div>
+                    </div>
+
+                    <div id="chainChart" class="chain-graph"></div>
+
+                    <div class="section-title">节点详情</div>
+                    <div style="margin-bottom: 16px;">
+                        <span class="node-card node-person">👤 人员节点</span>
+                        <span class="node-card node-org">🏢 组织节点</span>
+                        <span class="node-card node-supplier">📦 供应商节点</span>
+                    </div>
+                    <div v-for="node in chainResult.nodes" :key="node.id" style="display: inline-block; margin: 4px;">
+                        <span :class="'node-card node-' + (node.type === 'person' ? 'person' : node.type === 'organization' ? 'org' : 'supplier')">
+                            {{ node.name }} <span style="color: #718096; font-size: 11px;">({{ node.role }})</span>
+                        </span>
+                    </div>
+
+                    <div v-if="chainResult.metadata?.risk_nodes?.length > 0">
+                        <div class="section-title">风险节点</div>
+                        <div v-for="rn in chainResult.metadata.risk_nodes" :key="rn.node_id" class="alert alert-high">
+                            <span class="alert-icon">⚠️</span>
+                            <div>
+                                <div style="font-weight: 600;">{{ rn.name }}</div>
+                                <div style="font-size: 13px;">{{ rn.risk_desc }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Radar View -->
+        <div v-if="currentView === 'risk'">
+            <div class="panel">
+                <div class="panel-title">📈 风险雷达图</div>
+                <div class="grid grid-2" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">选择项目</label>
+                        <select v-model="riskProjectId" class="form-input">
+                            <option value="">请选择项目</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" @click="analyzeProjectRisk" :disabled="!riskProjectId">风险分析</button>
+
+                <div v-if="riskResult" style="margin-top: 24px;">
+                    <div class="grid grid-4">
+                        <div class="card">
+                            <div class="card-value">{{ riskResult.total_score }}</div>
+                            <div class="card-label">综合风险评分</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ riskResult.process_risk?.toFixed(1) || 0 }}</div>
+                            <div class="card-label">流程风险</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ riskResult.capital_risk?.toFixed(1) || 0 }}</div>
+                            <div class="card-label">资金风险</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-value">{{ riskResult.related_risk?.toFixed(1) || 0 }}</div>
+                            <div class="card-label">关联风险</div>
+                        </div>
+                    </div>
+
+                    <div id="riskRadarChart" class="risk-radar"></div>
+
+                    <div class="section-title">风险因子</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>维度</th>
+                                <th>规则代码</th>
+                                <th>严重程度</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(f, idx) in riskResult.risk_factors" :key="idx">
+                                <td>{{ f.dimension }}</td>
+                                <td><span style="color: #fc8181;">{{ f.code }}</span></td>
+                                <td><span :class="'badge badge-' + f.severity">{{ f.severity }}</span></td>
+                                <td>{{ f.description }}</td>
+                            </tr>
+                            <tr v-if="riskResult.risk_factors.length === 0">
+                                <td colspan="4" style="text-align: center; color: #718096;">无风险因子</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report View -->
+        <div v-if="currentView === 'report'">
+            <div class="panel">
+                <div class="panel-title">📑 合规审查报告</div>
+                <div class="grid grid-2" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">选择项目</label>
+                        <select v-model="reportProjectId" class="form-input">
+                            <option value="">请选择项目</option>
+                            <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.project_name }}</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" @click="generateReport" :disabled="!reportProjectId">生成报告</button>
+
+                <div v-if="fullReport" style="margin-top: 24px;">
+                    <div class="card" style="margin-bottom: 16px;">
+                        <h3 style="color: #4fd1c5; margin-bottom: 12px;">执行摘要</h3>
+                        <div class="grid grid-4">
+                            <div><strong>项目名称:</strong> {{ fullReport.sections?.executive_summary?.project_name }}</div>
+                            <div><strong>投资金额:</strong> {{ fullReport.sections?.executive_summary?.investment_amount?.toLocaleString() }} 元</div>
+                            <div><strong>综合评估:</strong> {{ fullReport.sections?.executive_summary?.overall_assessment }}</div>
+                            <div><strong>风险等级:</strong> <span :class="'badge badge-' + fullReport.sections?.executive_summary?.risk_level">{{ fullReport.sections?.executive_summary?.risk_level }}</span></div>
+                        </div>
+                        <div v-if="fullReport.sections?.executive_summary?.key_findings?.length > 0" style="margin-top: 12px;">
+                            <strong>关键发现:</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px; color: #a0aec0;">
+                                <li v-for="(f, idx) in fullReport.sections.executive_summary.key_findings" :key="idx">{{ f }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="section-title">问题清单 (共 {{ (fullReport.sections?.issues_list || []).length }} 项)</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>维度</th>
+                                <th>规则</th>
+                                <th>严重程度</th>
+                                <th>问题描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="issue in fullReport.sections?.issues_list" :key="issue.id">
+                                <td>{{ issue.id }}</td>
+                                <td>{{ issue.dimension }}</td>
+                                <td><span style="color: #fc8181;">{{ issue.code }}</span></td>
+                                <td><span :class="'badge badge-' + issue.severity">{{ issue.severity }}</span></td>
+                                <td>{{ issue.description }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="section-title">整改计划 (共 {{ (fullReport.sections?.rectification_plan || []).length }} 项)</div>
+                    <div v-for="plan in fullReport.sections?.rectification_plan" :key="plan.id" class="card" style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>{{ plan.rectification_action }}</strong>
+                            <span :class="'badge badge-' + plan.severity">{{ plan.severity }}</span>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 13px; color: #a0aec0;">
+                            责任部门: {{ plan.responsible_party }} | 完成期限: {{ plan.deadline }} | 状态: {{ plan.status }}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button class="btn btn-secondary" @click="exportMarkdown">导出 Markdown</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Log View -->
+        <div v-if="currentView === 'audit'">
+            <div class="panel">
+                <div class="panel-title">📝 审计日志</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>操作</th>
+                            <th>对象类型</th>
+                            <th>对象ID</th>
+                            <th>详情</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="log in auditLogs" :key="log.id">
+                            <td style="font-size: 12px; color: #718096;">{{ log.created_at }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.target_type || '-' }}</td>
+                            <td>{{ log.target_id || '-' }}</td>
+                            <td style="font-size: 12px; color: #a0aec0;">{{ log.details || '-' }}</td>
+                        </tr>
+                        <tr v-if="auditLogs.length === 0">
+                            <td colspan="5" style="text-align: center; color: #718096;">暂无审计日志</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+const { createApp, ref, onMounted, nextTick } = Vue;
+
+createApp({
+    setup() {
+        const API = 'http://localhost:8017/api';
+        const currentView = ref('dashboard');
+        const projectTab = ref('create');
+
+        // Data
+        const projects = ref([]);
+        const stats = ref({ totalProjects: 0, totalRiskScore: 0, totalIssues: 0, pendingProjects: 0 });
+        const riskAlerts = ref([]);
+        const rectificationTasks = ref([]);
+        const auditLogs = ref([]);
+
+        // Forms
+        const newProject = ref({ project_name: '', department: '', investment_amount: null });
+        const docForm = ref({ project_id: '', doc_type: 'project_proposal', content: '' });
+        const contractForm = ref({ project_id: '', contract_no: '', amount: null, signing_date: '', parties: '' });
+        const paymentForm = ref({ project_id: '', payment_no: '', amount: null, payment_date: '', invoice_no: '' });
+        const acceptanceForm = ref({ project_id: '', acceptance_no: '', amount: null, acceptance_date: '', result: '' });
+
+        // Triple match
+        const tripleMatchProjectId = ref('');
+        const tripleMatchResult = ref(null);
+
+        // Chain
+        const chainProjectId = ref('');
+        const chainResult = ref(null);
+
+        // Risk
+        const riskProjectId = ref('');
+        const riskResult = ref(null);
+
+        // Report
+        const reportProjectId = ref('');
+        const fullReport = ref(null);
+
+        // Charts
+        let radarChart = null;
+        let tripleMatchChart = null;
+        let chainChart = null;
+        let riskRadarChart = null;
+
+        async function fetchProjects() {
+            try {
+                const res = await fetch(`${API}/list_projects`);
+                const data = await res.json();
+                projects.value = data.projects || [];
+                stats.value.totalProjects = projects.value.length;
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchAuditLogs() {
+            try {
+                const res = await fetch(`${API}/audit_logs`);
+                const data = await res.json();
+                auditLogs.value = data.logs || [];
+            } catch (e) { console.error(e); }
+        }
+
+        async function registerProject() {
+            if (!newProject.value.project_name) { alert('请输入项目名称'); return; }
+            try {
+                const res = await fetch(`${API}/register_project`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newProject.value)
+                });
+                const data = await res.json();
+                alert('项目注册成功');
+                newProject.value = { project_name: '', department: '', investment_amount: null };
+                fetchProjects();
+            } catch (e) { alert('注册失败'); }
+        }
+
+        async function uploadDocument() {
+            if (!docForm.value.project_id) { alert('请选择项目'); return; }
+            try {
+                const res = await fetch(`${API}/upload_document`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(docForm.value)
+                });
+                const data = await res.json();
+                alert('资料上传成功');
+                docForm.value.content = '';
+            } catch (e) { alert('上传失败'); }
+        }
+
+        async function registerContract() {
+            if (!contractForm.value.project_id || !contractForm.value.amount) { alert('请填写必填项'); return; }
+            try {
+                const res = await fetch(`${API}/register_contract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(contractForm.value)
+                });
+                const data = await res.json();
+                alert('合同登记成功');
+                contractForm.value = { project_id: '', contract_no: '', amount: null, signing_date: '', parties: '' };
+            } catch (e) { alert('登记失败'); }
+        }
+
+        async function registerPayment() {
+            if (!paymentForm.value.project_id || !paymentForm.value.amount) { alert('请填写必填项'); return; }
+            try {
+                const res = await fetch(`${API}/register_payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentForm.value)
+                });
+                const data = await res.json();
+                alert('付款登记成功');
+                paymentForm.value = { project_id: '', payment_no: '', amount: null, payment_date: '', invoice_no: '' };
+            } catch (e) { alert('登记失败'); }
+        }
+
+        async function registerAcceptance() {
+            if (!acceptanceForm.value.project_id || !acceptanceForm.value.amount) { alert('请填写必填项'); return; }
+            try {
+                const res = await fetch(`${API}/register_acceptance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(acceptanceForm.value)
+                });
+                const data = await res.json();
+                alert('验收登记成功');
+                acceptanceForm.value = { project_id: '', acceptance_no: '', amount: null, acceptance_date: '', result: '' };
+            } catch (e) { alert('登记失败'); }
+        }
+
+        async function analyzeProject(projectId) {
+            try {
+                const res = await fetch(`${API}/analyze_project?project_id=${projectId}`, { method: 'POST' });
+                const data = await res.json();
+                riskResult.value = data.risk_result;
+                tripleMatchResult.value = data.triple_match_result;
+                chainResult.value = data.responsibility_chain;
+                fullReport.value = data.report;
+                currentView.value = 'risk';
+                await nextTick();
+                renderRiskRadar();
+            } catch (e) { alert('分析失败'); }
+        }
+
+        async function checkTripleMatch() {
+            if (!tripleMatchProjectId.value) return;
+            try {
+                const res = await fetch(`${API}/check_triple_match`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: parseInt(tripleMatchProjectId.value) })
+                });
+                tripleMatchResult.value = await res.json();
+                await nextTick();
+                renderTripleMatchChart();
+            } catch (e) { alert('检测失败'); }
+        }
+
+        async function buildChain() {
+            if (!chainProjectId.value) return;
+            try {
+                const res = await fetch(`${API}/build_responsibility_chain`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: parseInt(chainProjectId.value), nodes: [], edges: [] })
+                });
+                chainResult.value = await res.json();
+                await nextTick();
+                renderChainChart();
+            } catch (e) { alert('构建失败'); }
+        }
+
+        async function analyzeProjectRisk() {
+            if (!riskProjectId.value) return;
+            try {
+                const res = await fetch(`${API}/analyze_project?project_id=${riskProjectId.value}`, { method: 'POST' });
+                const data = await res.json();
+                riskResult.value = data.risk_result;
+                await nextTick();
+                renderRiskRadar();
+            } catch (e) { alert('分析失败'); }
+        }
+
+        async function generateReport() {
+            if (!reportProjectId.value) return;
+            try {
+                const res = await fetch(`${API}/analyze_project?project_id=${reportProjectId.value}`, { method: 'POST' });
+                const data = await res.json();
+                fullReport.value = data.report;
+            } catch (e) { alert('生成失败'); }
+        }
+
+        function selectProject(id) {
+            riskProjectId.value = id;
+            reportProjectId.value = id;
+            tripleMatchProjectId.value = id;
+            chainProjectId.value = id;
+            currentView.value = 'risk';
+        }
+
+        function exportMarkdown() {
+            if (!fullReport.value) return;
+            const md = `# 国企经营投资合规审查报告\n\n**报告编号**: ${fullReport.value.report_id}\n**生成时间**: ${fullReport.value.generated_at}\n\n`;
+            const summary = fullReport.value.sections?.executive_summary || {};
+            const issues = fullReport.value.sections?.issues_list || [];
+            const plans = fullReport.value.sections?.rectification_plan || [];
+
+            let content = `## 一、执行摘要\n\n`;
+            content += `- **项目名称**: ${summary.project_name}\n`;
+            content += `- **投资金额**: ${(summary.investment_amount || 0).toLocaleString()} 元\n`;
+            content += `- **综合评估**: ${summary.overall_assessment}\n`;
+            content += `- **风险等级**: ${summary.risk_level}\n\n`;
+
+            content += `## 二、问题清单 (共${issues.length}项)\n\n`;
+            issues.forEach(issue => {
+                content += `- **[${(issue.severity || '').toUpperCase()}]** ${issue.code}: ${issue.description}\n`;
+            });
+
+            content += `\n## 三、整改计划 (共${plans.length}项)\n\n`;
+            plans.forEach(plan => {
+                content += `### ${plan.rectification_action}\n`;
+                content += `- 责任部门: ${plan.responsible_party}\n`;
+                content += `- 完成期限: ${plan.deadline}\n`;
+                content += `- 状态: ${plan.status}\n\n`;
+            });
+
+            const blob = new Blob([md + content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `合规审查报告_${reportProjectId.value}_${Date.now()}.md`;
+            a.click();
+        }
+
+        function initDashboard() {
+            radarChart = echarts.init(document.getElementById('radarChart'));
+            const option = {
+                radar: {
+                    indicator: [
+                        { name: '流程风险', max: 100 },
+                        { name: '资金风险', max: 100 },
+                        { name: '关联风险', max: 100 },
+                        { name: '责任风险', max: 100 }
+                    ],
+                    shape: 'polygon',
+                    splitNumber: 4,
+                    axisName: { color: '#a0aec0' },
+                    splitLine: { lineStyle: { color: '#2a3a4d' } },
+                    splitArea: { show: false },
+                    axisLine: { lineStyle: { color: '#2a3a4d' } }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: [30, 25, 15, 20],
+                        name: '风险维度',
+                        areaStyle: { color: 'rgba(79, 209, 197, 0.3)' },
+                        lineStyle: { color: '#4fd1c5', width: 2 },
+                        itemStyle: { color: '#4fd1c5' }
+                    }]
+                }]
+            };
+            radarChart.setOption(option);
+        }
+
+        function renderRiskRadar() {
+            if (!riskResult.value) return;
+            const container = document.getElementById('riskRadarChart');
+            if (!container) return;
+            if (riskRadarChart) riskRadarChart.dispose();
+            riskRadarChart = echarts.init(container);
+            const option = {
+                radar: {
+                    indicator: [
+                        { name: '流程风险', max: 100 },
+                        { name: '资金风险', max: 100 },
+                        { name: '关联风险', max: 100 },
+                        { name: '责任风险', max: 100 }
+                    ],
+                    shape: 'polygon',
+                    splitNumber: 4,
+                    axisName: { color: '#a0aec0' },
+                    splitLine: { lineStyle: { color: '#2a3a4d' } },
+                    splitArea: { show: false },
+                    axisLine: { lineStyle: { color: '#2a3a4d' } }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: [
+                            riskResult.value.process_risk || 0,
+                            riskResult.value.capital_risk || 0,
+                            riskResult.value.related_risk || 0,
+                            riskResult.value.responsibility_risk || 0
+                        ],
+                        name: '风险雷达',
+                        areaStyle: { color: 'rgba(252, 129, 129, 0.3)' },
+                        lineStyle: { color: '#fc8181', width: 2 },
+                        itemStyle: { color: '#fc8181' }
+                    }]
+                }]
+            };
+            riskRadarChart.setOption(option);
+        }
+
+        function renderTripleMatchChart() {
+            if (!tripleMatchResult.value) return;
+            const container = document.getElementById('tripleMatchChart');
+            if (!container) return;
+            if (tripleMatchChart) tripleMatchChart.dispose();
+            tripleMatchChart = echarts.init(container);
+
+            const result = tripleMatchResult.value;
+            const matchData = result.mismatches.length === 0 ? [
+                { value: 100, name: '匹配' }
+            ] : result.mismatches.map(m => ({
+                value: Math.max(0, 100 - (m.deviation_pct || 0)),
+                name: m.type
+            }));
+
+            const option = {
+                tooltip: { trigger: 'item' },
+                legend: { orient: 'vertical', left: 'left', textStyle: { color: '#a0aec0' } },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 10, borderColor: '#1a2634', borderWidth: 2 },
+                    label: { color: '#e0e6ed' },
+                    data: [
+                        { value: result.contract_count * 1000000 || 0, name: '合同金额', itemStyle: { color: '#4fd1c5' } },
+                        { value: result.payment_count * 1000000 || 0, name: '付款金额', itemStyle: { color: '#ffb74d' } },
+                        { value: result.acceptance_count * 1000000 || 0, name: '验收金额', itemStyle: { color: '#fc8181' } }
+                    ]
+                }]
+            };
+            tripleMatchChart.setOption(option);
+        }
+
+        function renderChainChart() {
+            if (!chainResult.value) return;
+            const container = document.getElementById('chainChart');
+            if (!container) return;
+            if (chainChart) chainChart.dispose();
+            chainChart = echarts.init(container);
+
+            const nodes = (chainResult.value.nodes || []).map(n => ({
+                id: n.id,
+                name: n.name,
+                category: n.type === 'person' ? 0 : n.type === 'organization' ? 1 : 2,
+                symbolSize: n.role === 'project' ? 60 : 40
+            }));
+
+            const categories = [
+                { name: '人员', itemStyle: { color: '#4fd1c5' } },
+                { name: '组织', itemStyle: { color: '#ffb74d' } },
+                { name: '供应商', itemStyle: { color: '#fc8181' } }
+            ];
+
+            const edges = (chainResult.value.edges || []).map(e => ({
+                source: e.from,
+                target: e.to,
+                label: { show: true, content: e.relation, font: { size: 10, color: '#a0aec0' } },
+                lineStyle: { color: '#2a3a4d', curveness: 0.2 }
+            }));
+
+            const option = {
+                tooltip: { formatter: '{b}' },
+                legend: [{ data: categories.map(c => c.name), textStyle: { color: '#a0aec0' } }],
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    nodes,
+                    edges,
+                    categories,
+                    roam: true,
+                    label: { show: true, position: 'right', color: '#e0e6ed', font: { size: 11 } },
+                    lineStyle: { color: '#2a3a4d', curveness: 0.2 },
+                    emphasis: { focus: 'adjacent', lineStyle: { color: '#4fd1c5' } },
+                    force: { repulsion: 200, edgeLength: 120 }
+                }]
+            };
+            chainChart.setOption(option);
+        }
+
+        onMounted(async () => {
+            await fetchProjects();
+            await fetchAuditLogs();
+            await nextTick();
+            initDashboard();
+        });
+
+        return {
+            currentView, projectTab, projects, stats, riskAlerts, rectificationTasks, auditLogs,
+            newProject, docForm, contractForm, paymentForm, acceptanceForm,
+            tripleMatchProjectId, tripleMatchResult, chainProjectId, chainResult,
+            riskProjectId, riskResult, reportProjectId, fullReport,
+            registerProject, uploadDocument, registerContract, registerPayment, registerAcceptance,
+            analyzeProject, selectProject, checkTripleMatch, buildChain, analyzeProjectRisk, generateReport, exportMarkdown
+        };
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
