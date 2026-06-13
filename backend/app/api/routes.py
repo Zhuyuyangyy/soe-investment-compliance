@@ -61,8 +61,8 @@ async def register_project(project: ProjectCreate):
         log_audit("register_project", "project", project_id, f"Created project: {project.project_name}")
 
         cur.execute("SELECT * FROM projects WHERE id = ?", (project_id,))
-        row = cur.to_dict(cur.fetchone())
-        return row
+        row = cur.fetchone()
+        return dict(row)
     finally:
         conn.close()
 

@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soe-compliance-api
+    ports:
+      - "8017:8017"
+    volumes:
+      - compliance-data:/app/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8017
+      - LOG_LEVEL=info
+      - CORS_ORIGINS=*
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8017/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - soe-network
+
+  # Frontend (Nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: soe-compliance-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - soe-network
+
+volumes:
+  compliance-data:
+    driver: local
+
+networks:
+  soe-network:
+    driver: bridge

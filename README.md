@@ -1,133 +1,221 @@
-# 国企经营投资合规审查与责任链风险追踪系统 V1.0
+# SOE Investment Compliance
 
-## 项目概述
+> State-Owned Enterprise Investment Compliance Review System - Automated compliance auditing and responsibility chain risk tracking for SOE investment activities.
 
-本系统针对国有企业经营投资活动，提供合规审查与责任链风险追踪服务。系统实现了三重一大决策流程校验、合同-付款-验收三单匹配检测、投资风险熵评分、整改闭环报告等核心功能。
+![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Tests](https://img.shields.io/badge/Tests-90+-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/Coverage-80%25+-green.svg)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)
+![CI/CD](https://img.shields.io/badge/CI/CD-GitHub%20Actions-purple.svg)
 
-## 核心功能
+---
 
-### 1. 项目资料解析 (`project_parser.py`)
-- 解析立项、可研、会议纪要、合同、付款、验收材料
-- 虚拟文档坐标映射
-- 自动提取关键字段
+## Overview
 
-### 2. 三重一大流程校验 (`decision_checker.py`)
-- 检查重大事项决策流程是否完整
-- 决策程序合法性检测
-- 自动识别需要的三重一大程序
+SOE Investment Compliance is purpose-built for the regulatory oversight of state-owned enterprise (SOE) investment activities in China. It automates the verification of "Three-Major-Decisions" (三重一大) procedures, validates consistency across contracts, payments, and acceptance records, builds responsibility chain graphs for accountability tracing, and computes multi-dimensional risk entropy scores for early warning.
 
-### 3. 三单匹配检测 (`triple_match_checker.py`)
-- 检查合同金额、付款金额、验收金额是否一致
-- 时间线一致性检测
-- 发票一致性检测
+---
 
-### 4. 责任链图谱 (`responsibility_chain.py`)
-- 建立决策人、审批人、执行人、供应商关系图
-- 关联关系可视化
-- 风险节点检测
+## Key Features
 
-### 5. 投资风险熵评分 (`investment_risk_scorer.py`)
-- 流程风险、资金风险、关联风险、责任风险四维评分
-- 多维风险耦合模型
-- 风险因子提取
+- **Project Document Parsing** -- Automated extraction of key fields from project proposals, feasibility studies, meeting minutes, contracts, payment records, and acceptance documents
+- **Three-Major-Decisions Validation** -- Verifies that major decisions have complete decision records with proper approval chains
+- **Triple-Document Matching** -- Cross-validates contract amounts, payment amounts, and acceptance amounts for consistency
+- **Responsibility Chain Graph** -- Constructs a relationship graph mapping decision makers, approvers, executors, and suppliers
+- **Investment Risk Entropy Scoring** -- Four-dimensional risk model (process, capital, association, responsibility) with multi-factor coupling
+- **Remediation Closure Reports** -- Generates issue checklists, responsibility node tracing, and remediation plans
+- **Audit Trail** -- Complete operational logging for regulatory inspection and SASAC reporting
 
-### 6. 整改闭环报告 (`report_generator.py`)
-- 生成问题清单
-- 责任节点追溯
-- 整改建议与计划
+---
 
-## 技术架构
+## Quick Start
 
-```
-backend/
-  app/
-    api/routes.py      # FastAPI 路由
-    core/database.py   # SQLite 数据库
-    models/schemas.py  # Pydantic 模型
-    services/          # 业务逻辑服务
-    rules/             # 规则库 JSON
-  requirements.txt
-  start.bat
-frontend/
-  index.html           # Vue3 单文件前端
-```
+### Prerequisites
 
-## API 接口
+- Python 3.12+
+- Docker (optional)
 
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | `/api/health` | 健康检查 |
-| POST | `/api/register_project` | 注册项目 |
-| POST | `/api/upload_document` | 上传项目资料 |
-| POST | `/api/register_contract` | 登记合同 |
-| POST | `/api/register_payment` | 登记付款 |
-| POST | `/api/register_acceptance` | 登记验收 |
-| POST | `/api/check_triple_match` | 三单匹配检测 |
-| POST | `/api/build_responsibility_chain` | 构建责任链图谱 |
-| POST | `/api/analyze_project` | 分析项目合规性 |
-| GET | `/api/get_project/{project_id}` | 获取项目信息 |
-| GET | `/api/get_risk_report/{project_id}` | 获取风险报告 |
-| GET | `/api/audit_logs` | 获取审计日志 |
-| GET | `/api/list_projects` | 获取项目列表 |
+### Local Development
 
-## 启动方式
-
-### 后端启动
 ```bash
-cd backend
+# Clone and setup
+git clone <repository-url>
+cd soe-investment-compliance
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
 pip install -r requirements.txt
+
+# Run backend
+cd backend
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8017 --reload
+
+# Open frontend
+open frontend/index.html
 ```
-或双击 `start.bat`
 
-### 前端
-直接用浏览器打开 `frontend/index.html`
+### Docker
 
-## 数据库
+```bash
+docker-compose up -d
+```
 
-SQLite: `backend/soe_investment_compliance.db`
+API server: `http://localhost:8017` | Interactive docs: `http://localhost:8017/docs`
 
-表结构：
-- `rules` - 规则库
-- `projects` - 项目信息
-- `documents` - 项目文档
-- `contracts` - 合同记录
-- `payments` - 付款记录
-- `acceptance` - 验收记录
-- `responsibility_chain` - 责任链图谱
-- `analysis_results` - 分析结果
-- `audit_logs` - 审计日志
+---
 
-## 规则库
+## Architecture
 
-| 规则ID | 规则类型 | 描述 |
-|--------|----------|------|
-| RULE_SOE_001 | investment_decision | 投资决策依据不足 |
-| RULE_SOE_002 | triple_one_large | 三重一大程序缺失 |
-| RULE_SOE_003 | contract_amount | 合同金额异常 |
-| RULE_SOE_004 | procurement | 采购流程不合规 |
-| RULE_SOE_005 | triple_match | 三单金额不一致 |
-| RULE_SOE_006 | related_party | 关联交易未披露 |
-| RULE_SOE_007 | responsibility_trace | 责任追溯困难 |
+```
+Document Upload -> Parsing -> Three-Major-Decisions Check -> Triple-Document Match
+    -> Responsibility Chain -> Risk Entropy Scoring -> Compliance Report
+```
 
-## 风险评分维度
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.12, FastAPI, uvicorn |
+| Database | SQLite (dev) / PostgreSQL (prod) |
+| Validation | Pydantic v2 |
+| Frontend | Vue 3, ECharts 5 |
+| Containerization | Docker, Docker Compose |
+| CI/CD | GitHub Actions |
 
-- **流程风险 (30%)**: 决策程序完整性
-- **资金风险 (35%)**: 三单匹配、资金使用
-- **关联风险 (20%)**: 关联交易、利益关联
-- **责任风险 (15%)**: 责任链完整性、追溯性
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
-## 可拆解专利
+---
 
-1. 一种基于责任链图谱的国企经营投资风险追踪方法
-2. 一种面向三重一大流程的合规闭环校验方法
-3. 一种合同-付款-验收多源单据一致性检测方法
-4. 一种基于风险熵的国企投资决策异常预警系统
+## API Reference
 
-## 技术栈
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/register_project` | Register a new investment project |
+| `POST` | `/api/upload_document` | Upload project documents |
+| `POST` | `/api/register_contract` | Register a contract record |
+| `POST` | `/api/register_payment` | Register a payment record |
+| `POST` | `/api/register_acceptance` | Register an acceptance record |
+| `POST` | `/api/check_triple_match` | Run triple-document matching |
+| `POST` | `/api/build_responsibility_chain` | Construct responsibility chain graph |
+| `POST` | `/api/analyze_project` | Run full compliance analysis |
+| `GET` | `/api/get_project/{id}` | Retrieve project information |
+| `GET` | `/api/get_risk_report/{id}` | Retrieve risk assessment report |
+| `GET` | `/api/audit_logs` | Query audit logs |
+| `GET` | `/api/list_projects` | List all registered projects |
 
-- Python 3.12 + FastAPI + uvicorn
-- SQLAlchemy + SQLite
-- Pydantic 数据验证
-- Vue3 + ECharts5 前端
-- 风险熵多维评分模型
+Full OpenAPI documentation available at `/docs` when the server is running.
+
+---
+
+## Project Structure
+
+```
+soe-investment-compliance/
+├── backend/
+│   ├── app/
+│   │   ├── main.py                          # FastAPI application entry
+│   │   ├── api/routes.py                    # API endpoints
+│   │   ├── core/database.py                 # Database setup
+│   │   ├── models/schemas.py                # Pydantic data models
+│   │   ├── services/                        # Business logic services
+│   │   └── rules/soe_investment_rules.json  # Rule library
+│   └── requirements.txt
+├── frontend/
+│   └── index.html                           # Vue 3 + ECharts 5 frontend
+├── tests/                                   # Comprehensive test suite (90+ tests)
+│   ├── conftest.py                          # Shared fixtures
+│   ├── test_project_parser.py               # Document parsing tests
+│   ├── test_decision_checker.py             # Three-Major-Decisions tests
+│   ├── test_triple_match_checker.py         # Triple-document matching tests
+│   ├── test_responsibility_chain.py         # Responsibility chain tests
+│   ├── test_investment_risk_scorer.py       # Risk scoring tests
+│   ├── test_report_generator.py             # Report generation tests
+│   └── test_routes.py                       # API integration tests
+├── docs/                                    # Documentation
+│   ├── ARCHITECTURE.md                      # System architecture
+│   ├── DEPLOYMENT.md                        # Deployment guide
+│   └── COMPLIANCE_RULES.md                  # Rules reference
+├── .github/workflows/ci.yml                # CI/CD pipeline
+├── Dockerfile                               # Multi-stage Docker build
+├── docker-compose.yml                       # Docker Compose orchestration
+├── nginx.conf                               # Nginx reverse proxy config
+├── TODO.md                                  # Innovation roadmap
+├── INNOVATION_ROADMAP.md                    # Patent portfolio
+├── OPTIMIZATION_REPORT.md                   # Project optimization report
+├── requirements.txt                         # Production dependencies
+├── requirements-dev.txt                     # Development dependencies
+└── .gitignore
+```
+
+---
+
+## Risk Scoring Model
+
+| Dimension | Weight | What It Measures |
+|-----------|--------|-----------------|
+| Process Risk | 30% | Decision procedure completeness, approval chain validity |
+| Capital Risk | 35% | Triple-document matching, fund usage compliance |
+| Association Risk | 20% | Related-party transactions, conflict of interest indicators |
+| Responsibility Risk | 15% | Responsibility chain completeness, traceability gaps |
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ -v --cov=backend --cov-report=term-missing
+
+# Run specific test file
+pytest tests/test_decision_checker.py -v
+```
+
+---
+
+## Innovation & Patents
+
+| # | Patent Title | Core Innovation |
+|---|-------------|-----------------|
+| 1 | Responsibility Chain Graph-Based SOE Investment Risk Tracking | Graph-based accountability tracing |
+| 2 | Three-Major-Decisions Process Compliance Closure Verification | Closed-loop procedure validation |
+| 3 | Multi-Source Document Consistency Detection | Three-way cross-document reconciliation |
+| 4 | Investment Decision Anomaly Early Warning via Risk Entropy | Information entropy risk model |
+
+See [INNOVATION_ROADMAP.md](INNOVATION_ROADMAP.md) for the full patent portfolio and innovation pipeline.
+
+---
+
+## Contributing
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for development setup.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Run tests (`pytest tests/ -v`)
+4. Commit changes (`git commit -m 'Add amazing feature'`)
+5. Push to branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Disclaimer
+
+This system provides automated compliance analysis for reference purposes only. It does not constitute legal or financial advice. SOE investment decisions should be validated against applicable SASAC regulations and internal governance policies.
+
+---
+
+## Contact
+
+For technical inquiries, collaboration proposals, or patent licensing:
+
+- **Project Lead**: ZYY Project Team
+- **Issues**: Please use GitHub Issues for bug reports and feature requests

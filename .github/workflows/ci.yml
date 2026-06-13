@@ -1,27 +1,91 @@
-name: CI
+name: CI/CD Pipeline
+
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     branches: [main]
 
+env:
+  PYTHON_VERSION: "3.12"
+
 jobs:
+  # Linting
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install ruff
-      - run: ruff check .
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install ruff
+        run: pip install ruff==0.2.1
+      - name: Run linter
+        run: ruff check backend/ tests/
+      - name: Check formatting
+        run: ruff format --check backend/ tests/
 
+  # Unit Tests
   test:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install pytest
-      - run: pytest tests/ -x || echo "No tests yet"
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest==8.0.1 pytest-cov==4.1.0 pytest-asyncio==0.23.5 httpx==0.27.0
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ -v --cov=backend --cov-report=xml --cov-report=term-missing --cov-fail-under=70
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # Security Scan
+  security:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install security tools
+        run: pip install bandit==1.7.7 safety==2.3.5
+      - name: Run bandit security scan
+        run: bandit -r backend/ -ll --skip B101
+      - name: Check dependency safety
+        run: safety check -r requirements.txt || true
+
+  # Docker Build
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        run: |
+          docker build -t soe-investment-compliance:${{ github.sha }} .
+          docker build -t soe-investment-compliance:latest .
+      - name: Verify image
+        run: |
+          docker run --rm soe-investment-compliance:latest python -c "from backend.app.main import app; print('Import OK')"
+
+  # Deploy (placeholder)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy notification
+        run: echo "Ready for deployment. Docker image built successfully."
